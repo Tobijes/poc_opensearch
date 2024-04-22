@@ -1,0 +1,10 @@
+# Caches and the like
+.venv
+__pycache__
+
+# Security
+.env
+
+# Data (large files)
+unsplash-dataset
+*.zip
