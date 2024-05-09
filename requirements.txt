@@ -4,3 +4,5 @@ pillow
 opensearch-py
 pandas
 tqdm
+sentence_transformers
+datasets

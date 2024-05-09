@@ -1,8 +1,9 @@
 from opensearchpy import OpenSearch, RequestsHttpConnection
 from opensearchpy.helpers import bulk
-
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 class Searcher:
-    def __init__(self, region="us-east-1"):
+    def __init__(self, index_name):
         es_endpoint = "https://localhost:9200"
         es_username = "admin"
         es_password = "yourStrongPassword123!"
@@ -13,9 +14,9 @@ class Searcher:
             verify_certs=False,
             # connection_class = RequestsHttpConnection,
         )
-        self.index_name = "image"
+        self.index_name = index_name
 
-    def create_index(self):
+    def create_index(self, vector_dimension=512):
         knn_index = {
             "settings": {
                 "index.knn": True,
@@ -24,7 +25,7 @@ class Searcher:
                 "properties": {
                     "feature_vector": {
                         "type": "knn_vector",
-                        "dimension": 512,
+                        "dimension": vector_dimension,
                     }
                 }
             },

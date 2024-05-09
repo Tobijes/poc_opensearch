@@ -2,6 +2,7 @@ import pandas as pd
 from download_unsplash import DATASET_PATH, DOWNLOADED_PHOTOS_PATH
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from time import perf_counter
 
 # import clip_image_search.utils as utils
 from clip_image_search import CLIPFeatureExtractor, Searcher, utils
@@ -54,8 +55,11 @@ def main():
     searcher.create_index()
 
     print("Indexing images...")
+    start = perf_counter()
     searcher.bulk_ingest(generate_data(), chunk_size=128)
+    end = perf_counter()
 
+    print(f"Ingestion took {end-start}s")
 
 if __name__ == "__main__":
     main()
