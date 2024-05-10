@@ -3,40 +3,36 @@ import json
 import requests
 import streamlit as st
 
-import clip_image_search.utils as utils
-from clip_image_search import CLIPFeatureExtractor
-from e5_text_embed import E5FeatureExtractor
+
 from db_client import Searcher
 
-@st.cache_resource  # 👈 Add the caching decorator
-def load_clip_model():
-    return CLIPFeatureExtractor()
-
-@st.cache_resource  # 👈 Add the caching decorator
-def load_e5_model():
-    return E5FeatureExtractor()
+CLIP_URL = "http://127.0.0.1:8000"
+E5_URL = "http://127.0.0.1:8001"
 
 @st.cache_resource()
 def get_db(index_name):
     return Searcher(index_name=index_name)
 
 def handle_image(query, input_type, k=10):
-    clip_model = load_clip_model()
 
     if input_type == "text":
-        query_features = clip_model.get_text_features(query)
+        response = requests.post(CLIP_URL + "/texts", json={ "texts": [query] })
     elif input_type == "image":
-        image = utils.load_image_from_url(query)
-        query_features = clip_model.get_image_features(image)
+        pass
+        # image = utils.load_image_from_url(query)
+        # query_features = clip_model.get_image_features(image)
     else:
         return []
     db = get_db("image")
+    data = response.json()
+    query_features = data["feature_vectors"]
     response = db.knn_search(query_features[0], k=k)
     return response["hits"]["hits"]
 
 def handle_chats(query, k=10):
-    e5_model = load_e5_model()
-    query_features = e5_model.get_query_features([query])
+    response = requests.post(E5_URL + "/query", json={ "texts": [query] })
+    data = response.json()
+    query_features = data["feature_vectors"]
     db = get_db("chats")
     response = db.knn_search(query_features[0], k=k)
     return response["hits"]["hits"]
@@ -73,14 +69,12 @@ def main():
     k_results = st.sidebar.slider("# Results:", value=10, min_value=1, max_value=100)
     
     # Image Search
-    load_clip_model()
     st.sidebar.header("Unsplash Image Search")
     input_type = st.sidebar.radio("Query by", ("text", "image"))
     query_image = st.sidebar.text_input("Enter text/image URL here:")
     submit_image = st.sidebar.button("Submit image/text query")
     
     # Chat Search
-    load_e5_model()
     st.sidebar.header("Toxic Chat Search")
     query_chat = st.sidebar.text_input("Enter text here:")
     submit_chat = st.sidebar.button("Submit chat query")
